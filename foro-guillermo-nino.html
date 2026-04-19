@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foro · Guillermo Niño</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f2f7; --white: #fff; --border: #dde2ef; --surface: #f7f9fc;
+  --text: #1a1d2e; --muted: #7a80a0; --accent: #2563eb; --accent-light: #eff4ff;
+  --red: #e84d8a; --shadow: 0 2px 14px rgba(30,40,80,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-serif; min-height: 100vh; }
+
+header {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+  height: 58px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 8px rgba(30,40,80,0.06);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem; letter-spacing: -0.5px; }
+.logo-text em { color: var(--accent); font-style: normal; }
+.header-user { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px 5px 8px; font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+
+.layout { max-width: 620px; margin: 0 auto; padding: 22px 16px 80px; }
+
+/* Setup banner */
+.setup-banner { background: #fff8e6; border: 1px solid #fcd34d; border-radius: 14px; padding: 16px 18px; margin-bottom: 20px; font-size: 0.83rem; line-height: 1.75; color: #7a5500; }
+.setup-banner strong { display: block; font-size: 0.92rem; margin-bottom: 6px; color: #5a3a00; }
+.setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 6px; border-radius: 4px; font-size: 0.79rem; font-family: monospace; }
+.setup-banner ol { padding-left: 18px; }
+.setup-banner li { margin-bottom: 3px; }
+
+/* Compose */
+.post-form { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 18px 18px 14px; margin-bottom: 18px; box-shadow: var(--shadow); }
+.form-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.my-av { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; border: 2px solid var(--border); }
+textarea { flex: 1; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); padding: 10px 16px; font-family: 'Nunito', sans-serif; font-size: 0.93rem; color: var(--text); resize: none; min-height: 46px; outline: none; transition: border-color 0.2s, min-height 0.2s; }
+textarea:focus { border-color: var(--accent); min-height: 84px; }
+textarea::placeholder { color: var(--muted); }
+hr.div { border: none; border-top: 1px solid var(--border); margin: 0 0 12px; }
+.cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.cat-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 0.75rem; font-weight: 700; padding: 5px 13px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+.cat-btn:hover, .cat-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.form-bottom { display: flex; justify-content: flex-end; }
+.btn-pub { background: var(--accent); color: #fff; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; padding: 10px 26px; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+.btn-pub:hover:not(:disabled) { background: #1d4ed8; }
+.btn-pub:disabled { opacity: 0.5; cursor: default; }
+
+/* Filters */
+.filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.filter-tab { background: var(--white); border: 1px solid var(--border); color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Loader */
+#loader { text-align: center; padding: 40px; color: var(--muted); font-size: 0.9rem; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Cards */
+.post-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.post-body { padding: 16px 18px 10px; }
+.post-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; border: 2px solid var(--border); }
+.post-info { flex: 1; min-width: 0; }
+.post-nick { font-weight: 700; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-time { color: var(--muted); font-size: 0.73rem; }
+.post-cat { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.post-text { font-size: 0.96rem; line-height: 1.65; color: var(--text); margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
+.post-actions { display: flex; gap: 2px; padding-top: 8px; border-top: 1px solid var(--border); }
+.act-btn { background: none; border: none; color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.act-btn:hover { background: var(--surface); color: var(--text); }
+.act-btn.liked { color: var(--red); }
+
+/* Comments */
+.comments-section { border-top: 1px solid var(--border); background: var(--surface); }
+.comments-list { padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+.comment { display: flex; gap: 8px; animation: fadeUp 0.2s ease; }
+.c-av { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; border: 1px solid var(--border); }
+.c-bubble { background: var(--white); border: 1px solid var(--border); border-radius: 0 12px 12px 12px; padding: 7px 12px; flex: 1; }
+.c-nick { font-size: 0.75rem; font-weight: 700; margin-bottom: 2px; }
+.c-text { font-size: 0.88rem; color: var(--text); line-height: 1.5; word-break: break-word; }
+.comment-form { display: flex; gap: 8px; padding: 10px 18px 14px; }
+.c-input { flex: 1; border: 1px solid var(--border); border-radius: 22px; background: var(--white); padding: 8px 14px; font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: var(--text); outline: none; transition: border-color 0.2s; }
+.c-input:focus { border-color: var(--accent); }
+.c-input::placeholder { color: var(--muted); }
+.btn-send { background: var(--accent); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.btn-send:hover { background: #1d4ed8; }
+
+.empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.empty div { font-size: 2.5rem; margin-bottom: 10px; }
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(70px); background: #1a1d2e; color: #fff; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 10px 22px; border-radius: 30px; transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); z-index: 999; pointer-events: none; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏫</div>
+    <div class="logo-text">Guillermo <em>Niño</em></div>
+  </div>
+  <div class="header-user">
+    <span id="hAv"></span>
+    <span id="hNick"></span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="setup-banner">
+    <strong>⚙️ Solo necesitas hacer esto una vez para activar el foro</strong>
+    <ol>
+      <li>Ve a <code>console.firebase.google.com</code> → crea un proyecto gratis</li>
+      <li>En el menú izquierdo abre <strong>Firestore Database</strong> → "Crear base de datos" → modo prueba</li>
+      <li>Haz clic en el engranaje ⚙️ → <strong>Configuración del proyecto</strong> → ícono <code>&lt;/&gt;</code> → registra la app</li>
+      <li>Copia los valores que aparecen y pégalos abajo donde dice <code>TU_*</code></li>
+      <li>Sube este archivo a <strong>GitHub Pages</strong> y comparte el link con tus compañeros</li>
+    </ol>
+  </div>
+
+  <!-- Formulario -->
+  <div class="post-form">
+    <div class="form-top">
+      <div class="my-av" id="myAvForm">🙂</div>
+      <textarea id="postText" placeholder="¿Qué quieres compartir con el colegio?"></textarea>
+    </div>
+    <hr class="div">
+    <div class="cats">
+      <button class="cat-btn active" data-cat="General"   onclick="selectCat(this)">General</button>
+      <button class="cat-btn" data-cat="Noticias"  onclick="selectCat(this)">📢 Noticias</button>
+      <button class="cat-btn" data-cat="Memes"     onclick="selectCat(this)">😂 Memes</button>
+      <button class="cat-btn" data-cat="Quejas"    onclick="selectCat(this)">😤 Quejas</button>
+      <button class="cat-btn" data-cat="Eventos"   onclick="selectCat(this)">🎉 Eventos</button>
+      <button class="cat-btn" data-cat="Preguntas" onclick="selectCat(this)">🤔 Preguntas</button>
+    </div>
+    <div class="form-bottom">
+      <button class="btn-pub" id="pubBtn" onclick="publishPost()">Publicar</button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filter-bar">
+    <button class="filter-tab active" onclick="setFilter('all',this)">Todos</button>
+    <button class="filter-tab" onclick="setFilter('Noticias',this)">📢 Noticias</button>
+    <button class="filter-tab" onclick="setFilter('Memes',this)">😂 Memes</button>
+    <button class="filter-tab" onclick="setFilter('Eventos',this)">🎉 Eventos</button>
+    <button class="filter-tab" onclick="setFilter('Quejas',this)">😤 Quejas</button>
+    <button class="filter-tab" onclick="setFilter('Preguntas',this)">🤔 Preguntas</button>
+  </div>
+
+  <div id="loader"><div class="spinner"></div>Conectando…</div>
+  <div id="feed"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, orderBy, query,
+         doc, updateDoc, increment, arrayUnion, arrayRemove,
+         serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ═══════════════════════════════════════════════════════════
+// 🔧  REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE
+//     (sin Storage — 100% gratis, sin tarjeta)
+const firebaseConfig = {
+  apiKey:            "AIzaSyDOQC-EQ1HxMONpf9Lm081gF6Q8c68LOsQ",
+  authDomain:        "foro-guillermo.firebaseapp.com",
+  projectId:         "foro-guillermo",
+  storageBucket:     "foro-guillermo.firebasestorage.app",
+  messagingSenderId: "1087768434743",
+  appId:             "1:1087768434743:web:d5141916eea45f3e94c7b2"
+};
+// ═══════════════════════════════════════════════════════════
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Identidad anónima por sesión ─────────────────────────────────────────────
+const AVATARS = ['🐶','🐱','🦊','🐸','🐧','🦁','🐻','🦋','🦄','🐙','🦜','🐺','🐨','🦝','🐯','🐮','🐷','🐼','🐻‍❄️','🦔'];
+const COLORS  = ['#2563eb','#d97706','#db2777','#059669','#7c3aed','#0891b2','#dc2626','#65a30d','#c2410c','#0369a1'];
+const NICKS   = ['Curioso','Misterioso','Anónimo','Secreto','Invisible','Fantasma','Libre','Silencioso','Inquieto','Rebelde','Sombra','Desconocido'];
+
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+let myId   = sessionStorage.getItem('gn_id');
+if(!myId){ myId=Date.now().toString(36)+Math.random().toString(36).slice(2); sessionStorage.setItem('gn_id',myId); }
+const myAv   = sessionStorage.getItem('gn_av')  ||(()=>{ const v=rnd(AVATARS); sessionStorage.setItem('gn_av',v);   return v; })();
+const myCol  = sessionStorage.getItem('gn_col') ||(()=>{ const v=rnd(COLORS);  sessionStorage.setItem('gn_col',v);  return v; })();
+const myNick = sessionStorage.getItem('gn_nick')||(()=>{ const v=myAv+' '+rnd(NICKS); sessionStorage.setItem('gn_nick',v); return v; })();
+
+document.getElementById('hAv').textContent      = myAv;
+document.getElementById('hNick').textContent    = myNick;
+document.getElementById('myAvForm').textContent = myAv;
+
+// ── Estado ───────────────────────────────────────────────────────────────────
+const CAT_COLORS = {General:'#6b7080',Noticias:'#2563eb',Memes:'#d97706',Quejas:'#db2777',Eventos:'#059669',Preguntas:'#7c3aed'};
+let selCat='General', filter='all', cache={};
+
+// ── Listener en tiempo real ───────────────────────────────────────────────────
+const postsRef = collection(db,'gn_posts');
+onSnapshot(query(postsRef, orderBy('createdAt','desc')), snap=>{
+  snap.docChanges().forEach(ch=>{
+    if(ch.type==='removed') delete cache[ch.doc.id];
+    else cache[ch.doc.id]={id:ch.doc.id,...ch.doc.data()};
+    if(ch.type==='modified') liveUpdate(ch.doc.id, ch.doc.data());
+  });
+  renderFeed();
+  document.getElementById('loader').style.display='none';
+});
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderFeed(){
+  const feed=document.getElementById('feed');
+  let list=Object.values(cache).sort((a,b)=>ts(b)-ts(a));
+  if(filter!=='all') list=list.filter(p=>p.cat===filter);
+  if(!list.length){ feed.innerHTML='<div class="empty"><div>📭</div><p>¡Sé el primero en publicar!</p></div>'; return; }
+  const existing=new Set([...feed.querySelectorAll('.post-card')].map(c=>c.id.slice(3)));
+  list.forEach(p=>{
+    if(!existing.has(p.id)){
+      const el=document.createElement('div');
+      el.innerHTML=buildCard(p);
+      feed.insertBefore(el.firstChild, feed.firstChild);
+    }
+  });
+  feed.querySelectorAll('.post-card').forEach(c=>{ if(!cache[c.id.slice(3)]) c.remove(); });
+}
+
+function ts(p){ return p.createdAt?.toMillis?.()??p.createdAt??0; }
+function ago(t){
+  if(!t) return 'ahora';
+  const d=Date.now()-ts({createdAt:t});
+  if(d<60000) return 'ahora mismo';
+  if(d<3600000) return `hace ${Math.floor(d/60000)} min`;
+  if(d<86400000) return `hace ${Math.floor(d/3600000)} h`;
+  return `hace ${Math.floor(d/86400000)} d`;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function buildCard(p){
+  const liked=(p.likedBy||[]).includes(myId);
+  const cc=CAT_COLORS[p.cat]||'#6b7080';
+  const comms=(p.comments||[]).sort((a,b)=>a.ts-b.ts);
+  return `<div class="post-card" id="pc-${p.id}">
+    <div class="post-body">
+      <div class="post-meta">
+        <div class="avatar" style="background:${p.color}22">${p.avatar}</div>
+        <div class="post-info">
+          <div class="post-nick" style="color:${p.color}">${esc(p.nick)}</div>
+          <div class="post-time">${ago(p.createdAt)}</div>
+        </div>
+        <span class="post-cat" style="background:${cc}18;color:${cc};border:1px solid ${cc}44">${esc(p.cat)}</span>
+      </div>
+      <div class="post-text">${esc(p.text)}</div>
+      <div class="post-actions">
+        <button class="act-btn ${liked?'liked':''}" id="lb-${p.id}" onclick="toggleLike('${p.id}')">
+          <span id="lh-${p.id}">${liked?'❤️':'🤍'}</span> <span id="lc-${p.id}">${p.likes||0}</span>
+        </button>
+        <button class="act-btn" onclick="toggleComments('${p.id}')">
+          💬 <span id="cc-${p.id}">${comms.length}</span>
+        </button>
+      </div>
+    </div>
+    <div class="comments-section" id="cs-${p.id}" style="display:none">
+      <div class="comments-list" id="cl-${p.id}">${comms.map(buildCmt).join('')}</div>
+      <div class="comment-form">
+        <input class="c-input" id="ci-${p.id}" placeholder="Comenta anónimamente…" maxlength="400"
+          onkeydown="if(event.key==='Enter')addComment('${p.id}')">
+        <button class="btn-send" onclick="addComment('${p.id}')">➤</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildCmt(c){
+  return `<div class="comment">
+    <div class="c-av" style="background:${c.color}22">${(c.nick||'?').split(' ')[0]}</div>
+    <div class="c-bubble">
+      <div class="c-nick" style="color:${c.color}">${esc(c.nick)}</div>
+      <div class="c-text">${esc(c.text)}</div>
+    </div>
+  </div>`;
+}
+
+function liveUpdate(id, data){
+  const liked=(data.likedBy||[]).includes(myId);
+  const lc=document.getElementById('lc-'+id); if(lc) lc.textContent=data.likes||0;
+  const lh=document.getElementById('lh-'+id); if(lh) lh.textContent=liked?'❤️':'🤍';
+  const lb=document.getElementById('lb-'+id); if(lb){ liked?lb.classList.add('liked'):lb.classList.remove('liked'); }
+  const ccEl=document.getElementById('cc-'+id); if(ccEl) ccEl.textContent=(data.comments||[]).length;
+  const cl=document.getElementById('cl-'+id);
+  if(cl){ cl.innerHTML=(data.comments||[]).sort((a,b)=>a.ts-b.ts).map(buildCmt).join(''); }
+}
+
+// ── Acciones ──────────────────────────────────────────────────────────────────
+window.publishPost=async function(){
+  const text=document.getElementById('postText').value.trim();
+  if(!text){ showToast('Escribe algo antes de publicar 🙏'); return; }
+  const btn=document.getElementById('pubBtn');
+  btn.disabled=true; btn.textContent='Publicando…';
+  await addDoc(postsRef,{text,cat:selCat,authorId:myId,avatar:myAv,color:myCol,nick:myNick,likes:0,likedBy:[],comments:[],createdAt:serverTimestamp()});
+  document.getElementById('postText').value='';
+  btn.disabled=false; btn.textContent='Publicar';
+  showToast('¡Publicado! 🎉');
+};
+
+window.toggleLike=async function(id){
+  const p=cache[id]; if(!p) return;
+  const liked=(p.likedBy||[]).includes(myId);
+  await updateDoc(doc(db,'gn_posts',id),{
+    likes: increment(liked?-1:1),
+    likedBy: liked?arrayRemove(myId):arrayUnion(myId)
+  });
+};
+
+window.addComment=async function(id){
+  const inp=document.getElementById('ci-'+id);
+  const text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  await updateDoc(doc(db,'gn_posts',id),{
+    comments: arrayUnion({nick:myNick,color:myCol,text,ts:Date.now()})
+  });
+};
+
+window.toggleComments=function(id){
+  const s=document.getElementById('cs-'+id);
+  s.style.display=s.style.display==='none'?'block':'none';
+};
+
+window.selectCat=function(btn){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); selCat=btn.dataset.cat;
+};
+
+window.setFilter=function(cat,btn){
+  filter=cat;
+  document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+};
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
