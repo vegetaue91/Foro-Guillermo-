@@ -113,6 +113,18 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 0 0 12px; }
 </header>
 
 <div class="layout">
+
+  <div class="setup-banner">
+    <strong>⚙️ Solo necesitas hacer esto una vez para activar el foro</strong>
+    <ol>
+      <li>Ve a <code>console.firebase.google.com</code> → crea un proyecto gratis</li>
+      <li>En el menú izquierdo abre <strong>Firestore Database</strong> → "Crear base de datos" → modo prueba</li>
+      <li>Haz clic en el engranaje ⚙️ → <strong>Configuración del proyecto</strong> → ícono <code>&lt;/&gt;</code> → registra la app</li>
+      <li>Copia los valores que aparecen y pégalos abajo donde dice <code>TU_*</code></li>
+      <li>Sube este archivo a <strong>GitHub Pages</strong> y comparte el link con tus compañeros</li>
+    </ol>
+  </div>
+
   <!-- Formulario -->
   <div class="post-form">
     <div class="form-top">
@@ -159,12 +171,12 @@ import { getFirestore, collection, addDoc, onSnapshot, orderBy, query,
 // 🔧  REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE
 //     (sin Storage — 100% gratis, sin tarjeta)
 const firebaseConfig = {
-  apiKey:            "AIzaSyDOQC-EQ1HxMONpf9Lm081gF6Q8c68LOsQ",
-  authDomain:        "foro-guillermo.firebaseapp.com",
-  projectId:         "foro-guillermo",
-  storageBucket:     "foro-guillermo.firebasestorage.app",
-  messagingSenderId: "1087768434743",
-  appId:             "1:1087768434743:web:d5141916eea45f3e94c7b2"
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROJECT.firebaseapp.com",
+  projectId:         "TU_PROJECT_ID",
+  storageBucket:     "TU_PROJECT.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
 };
 // ═══════════════════════════════════════════════════════════
 
