@@ -339,3 +339,57 @@ function liveUpdate(id, data){
 }
 
 // ── Acciones ──────────────────────────────
+  window.publishPost=async function(){
+  const text=document.getElementById('postText').value.trim();
+  if(!text){ showToast('Escribe algo antes de publicar 🙏'); return; }
+  const btn=document.getElementById('pubBtn');
+  btn.disabled=true; btn.textContent='Publicando…';
+  await addDoc(postsRef,{text,cat:selCat,authorId:myId,avatar:myAv,color:myCol,nick:myNick,likes:0,likedBy:[],comments:[],createdAt:serverTimestamp()});
+  document.getElementById('postText').value='';
+  btn.disabled=false; btn.textContent='Publicar';
+  showToast('¡Publicado! 🎉');
+};
+
+window.toggleLike=async function(id){
+  const p=cache[id]; if(!p) return;
+  const liked=(p.likedBy||[]).includes(myId);
+  await updateDoc(doc(db,'gn_posts',id),{
+    likes: increment(liked?-1:1),
+    likedBy: liked?arrayRemove(myId):arrayUnion(myId)
+  });
+};
+
+window.addComment=async function(id){
+  const inp=document.getElementById('ci-'+id);
+  const text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  await updateDoc(doc(db,'gn_posts',id),{
+    comments: arrayUnion({nick:myNick,color:myCol,text,ts:Date.now()})
+  });
+};
+
+window.toggleComments=function(id){
+  const s=document.getElementById('cs-'+id);
+  s.style.display=s.style.display==='none'?'block':'none';
+};
+
+window.selectCat=function(btn){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); selCat=btn.dataset.cat;
+};
+
+window.setFilter=function(cat,btn){
+  filter=cat;
+  document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+};
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
