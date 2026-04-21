@@ -116,7 +116,16 @@ hr.div { border: none; border-top: 1px solid var(--border); margin: 0 0 12px; }
 
 <div class="layout">
 
-  <!-- Formulario -->
+  <!-- Banner notificaciones -->
+  <div id="notifBanner" style="display:none;background:#eff4ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:1.4rem;">🔔</span>
+    <div style="flex:1;">
+      <div style="font-weight:700;font-size:0.88rem;color:#1e40af;margin-bottom:2px;">Activa las notificaciones</div>
+      <div style="font-size:0.78rem;color:#3b82f6;">Así te avisamos cuando los admins publiquen algo nuevo</div>
+    </div>
+    <button id="notifBtn" style="background:#2563eb;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;padding:7px 14px;border:none;border-radius:10px;cursor:pointer;flex-shrink:0;">Activar</button>
+    <button id="notifClose" style="background:none;border:none;color:#7a80a0;font-size:1rem;cursor:pointer;flex-shrink:0;">✕</button>
+  </div>
   <div class="post-form">
     <div class="form-top">
       <div class="my-av" id="myAvForm">🙂</div>
@@ -157,10 +166,9 @@ import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/fire
 import { getFirestore, collection, addDoc, onSnapshot, orderBy, query,
          doc, updateDoc, increment, arrayUnion, arrayRemove,
          serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getMessaging, getToken, onMessage }
+         from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
-// ═══════════════════════════════════════════════════════════
-// 🔧  REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE
-//     (sin Storage — 100% gratis, sin tarjeta)
 const firebaseConfig = {
   apiKey:            "AIzaSyDOQC-EQ1HxMONpf9Lm081gF6Q8c68LOsQ",
   authDomain:        "foro-guillermo.firebaseapp.com",
@@ -169,10 +177,47 @@ const firebaseConfig = {
   messagingSenderId: "1087768434743",
   appId:             "1:1087768434743:web:d5141916eea45f3e94c7b2"
 };
-// ═══════════════════════════════════════════════════════════
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const VAPID_KEY = "BJcUWqASbChdtY-5SKpEbudvHB-pu2hasfkvioqZ2txkApFClhx_J1kOAwRXXpHIi1NiNoiOLx6mJsFxPzUXDM";
+
+const app      = initializeApp(firebaseConfig);
+const db       = getFirestore(app);
+const messaging= getMessaging(app);
+
+// ── Notificaciones FCM ────────────────────────────────────────────────────────
+let firstLoad = true;
+
+async function activarNotificaciones(){
+  try {
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if(token){
+      localStorage.setItem('gn_fcm_token', token);
+      showToast('🔔 Notificaciones activadas');
+      document.getElementById('notifBanner').style.display = 'none';
+    }
+  } catch(e){
+    showToast('No se pudo activar 😔 Permite notis en Chrome');
+    console.error(e);
+  }
+}
+
+// Notificaciones en primer plano
+onMessage(messaging, payload => {
+  showToast('🔔 ' + (payload.notification?.body || 'Nuevo post'));
+});
+
+// Banner
+if(Notification.permission !== 'granted'){
+  document.getElementById('notifBanner').style.display = 'flex';
+} else {
+  activarNotificaciones();
+}
+
+document.getElementById('notifBtn').addEventListener('click', activarNotificaciones);
+document.getElementById('notifClose').addEventListener('click', ()=>{
+  document.getElementById('notifBanner').style.display = 'none';
+});
 
 // ── Identidad anónima por sesión ─────────────────────────────────────────────
 const AVATARS = ['🐶','🐱','🦊','🐸','🐧','🦁','🐻','🦋','🦄','🐙','🦜','🐺','🐨','🦝','🐯','🐮','🐷','🐼','🐻‍❄️','🦔'];
@@ -200,9 +245,10 @@ const postsRef = collection(db,'gn_posts');
 onSnapshot(query(postsRef, orderBy('createdAt','desc')), snap=>{
   snap.docChanges().forEach(ch=>{
     if(ch.type==='removed') delete cache[ch.doc.id];
-    else cache[ch.doc.id]={id:ch.doc.id,...ch.doc.data()};
+    else { cache[ch.doc.id]={id:ch.doc.id,...ch.doc.data()}; }
     if(ch.type==='modified') liveUpdate(ch.doc.id, ch.doc.data());
   });
+  firstLoad = false;
   renderFeed();
   document.getElementById('loader').style.display='none';
 });
@@ -250,6 +296,7 @@ function buildCard(p){
         <span class="post-cat" style="background:${cc}18;color:${cc};border:1px solid ${cc}44">${esc(p.cat)}</span>
       </div>
       <div class="post-text">${esc(p.text)}</div>
+      ${p.imgB64?`<img src="${p.imgB64}" style="width:100%;max-height:320px;object-fit:cover;border-radius:10px;margin-bottom:10px;display:block;">`:''}
       ${p.audioB64?`<div class="audio-wrap"><span>🎵</span><audio controls src="${p.audioB64}" style="flex:1;height:32px;accent-color:#2563eb;"></audio></div>`:''}
       <div class="post-actions">
         <button class="act-btn ${liked?'liked':''}" id="lb-${p.id}" onclick="toggleLike('${p.id}')">
@@ -291,58 +338,4 @@ function liveUpdate(id, data){
   if(cl){ cl.innerHTML=(data.comments||[]).sort((a,b)=>a.ts-b.ts).map(buildCmt).join(''); }
 }
 
-// ── Acciones ──────────────────────────────────────────────────────────────────
-window.publishPost=async function(){
-  const text=document.getElementById('postText').value.trim();
-  if(!text){ showToast('Escribe algo antes de publicar 🙏'); return; }
-  const btn=document.getElementById('pubBtn');
-  btn.disabled=true; btn.textContent='Publicando…';
-  await addDoc(postsRef,{text,cat:selCat,authorId:myId,avatar:myAv,color:myCol,nick:myNick,likes:0,likedBy:[],comments:[],createdAt:serverTimestamp()});
-  document.getElementById('postText').value='';
-  btn.disabled=false; btn.textContent='Publicar';
-  showToast('¡Publicado! 🎉');
-};
-
-window.toggleLike=async function(id){
-  const p=cache[id]; if(!p) return;
-  const liked=(p.likedBy||[]).includes(myId);
-  await updateDoc(doc(db,'gn_posts',id),{
-    likes: increment(liked?-1:1),
-    likedBy: liked?arrayRemove(myId):arrayUnion(myId)
-  });
-};
-
-window.addComment=async function(id){
-  const inp=document.getElementById('ci-'+id);
-  const text=inp.value.trim(); if(!text) return;
-  inp.value='';
-  await updateDoc(doc(db,'gn_posts',id),{
-    comments: arrayUnion({nick:myNick,color:myCol,text,ts:Date.now()})
-  });
-};
-
-window.toggleComments=function(id){
-  const s=document.getElementById('cs-'+id);
-  s.style.display=s.style.display==='none'?'block':'none';
-};
-
-window.selectCat=function(btn){
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); selCat=btn.dataset.cat;
-};
-
-window.setFilter=function(cat,btn){
-  filter=cat;
-  document.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderFeed();
-};
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-</script>
-</body>
-</html>
+// ── Acciones ──────────────────────────────
